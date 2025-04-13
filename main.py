@@ -1,5 +1,6 @@
 import asyncio
 import os
+from zoneinfo import ZoneInfo
 import httpx
 from bs4 import BeautifulSoup, Tag
 from datetime import datetime
@@ -74,6 +75,7 @@ async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) 
         article_meta_datetime_value = article_meta_datetime_tag.find('span', class_='article-meta-value')
         assert isinstance(article_meta_datetime_value, Tag), "Article meta datetime value not found"
         article_meta_datetime = datetime.strptime(article_meta_datetime_value.get_text(strip=True), "%a %b %d %H:%M:%S %Y")
+        article_meta_datetime = article_meta_datetime.replace(tzinfo=ZoneInfo("Asia/Taipei"))
 
         # Remove metadata and pushes from content
         assert isinstance(main_content, Tag)
@@ -174,8 +176,6 @@ async def post_article(client: httpx.AsyncClient, platform: str, article: Dict[s
             "content": article["content"],
             "url": article["url"]
         }
-
-        print("Payload-Created-At: ", article["created_at"])
         
         response = await client.post(url, json=payload)
         
@@ -254,9 +254,10 @@ async def process_article(
             # Parse comment time if available
             try:
                 comment_time = datetime.strptime(comment_data['time'].strip(), "%m/%d %H:%M")
-                comment_time = comment_time.replace(year=datetime.now().year)
+                # fixme: it might be a last year's comment
+                comment_time = comment_time.replace(year=article['created_at'].year, tzinfo=ZoneInfo("Asia/Taipei"))
             except ValueError:
-                print("Bad time format: ", comment_data['time'])
+                logger.warning(f"Bad time format: {comment_data['time']}")
                 comment_time = datetime.now()
 
             # Create comment object
