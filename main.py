@@ -1,11 +1,10 @@
 import asyncio
 import os
-import re
 import httpx
 from bs4 import BeautifulSoup, Tag
 from datetime import datetime
 import logging
-from typing import List, Dict, Any, Tuple, cast
+from typing import List, Dict, Any, Tuple
 
 # Configure logging
 logging.basicConfig(
@@ -26,17 +25,14 @@ COOKIES = {
 # API configuration
 API_BASE_URL = os.getenv("STORAGE_API_BASE_URL", "http://localhost:8080")  # Change this to your actual API base URL
 
-# 111.240.96.24 03/29 22:49
-IP_DATETIME_EXTRACTOR = re.compile(r"([\d.]+) (\d{2}/\d{2} \d{2}:\d{2})")
-
 
 async def get_month_first_day() -> datetime:
     """Get the first day of the current month."""
     today = datetime.today()
-    return today.replace(day=today.day - 1)
+    return today.replace(day=1)
 
 
-async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) -> Tuple[str, List[Dict[str, str]]]:
+async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) -> Tuple[str, datetime | None, List[Dict[str, str]]]:
     """Fetch article content and comments from a PTT article URL."""
     try:
         response = await client.get(url, headers=HEADERS, cookies=COOKIES)
@@ -46,7 +42,7 @@ async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) 
         main_content = soup.find('div', id='main-content')
         
         if not main_content:
-            return '', []
+            return '', None, []
 
         # Extract comments (pushes)
         pushes = []
@@ -56,22 +52,28 @@ async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) 
             content = push.select_one('span.push-content')
             ipdatetime = push.select_one('span.push-ipdatetime')
 
-            ip = ''
-            datetime = ''
+            assert isinstance(ipdatetime, Tag)
 
-            if ipdatetime:
-                ipdatetime_match = IP_DATETIME_EXTRACTOR.match(ipdatetime.text.strip())
-                if ipdatetime_match:
-                    ip = cast(str, ipdatetime_match.group(1))
-                    datetime = cast(str, ipdatetime_match.group(2))
+            # 111.240.96.24 03/29 22:49
+            _, time = ipdatetime.get_text(strip=True).split(' ', maxsplit=1)
 
             pushes.append({
                 'tag': tag.text.strip() if tag else '',
                 'user': user.text.strip() if user else '',
                 'content': content.text.strip(': ').strip() if content else '',
-                'ip': ip,
-                'datetime': datetime
+                'time': time
             })
+
+        # Find metadata with article-meta-tag=時間
+        article_meta_datetime_tag_name = soup.find('span', class_='article-meta-tag', string='時間')
+        assert isinstance(article_meta_datetime_tag_name, Tag), "Article meta datetime tag not found"
+        article_meta_datetime_tag = article_meta_datetime_tag_name.parent
+        assert isinstance(article_meta_datetime_tag, Tag), "Article meta datetime tag not found"
+
+        # Sun Apr 13 14:05:20 2025
+        article_meta_datetime_value = article_meta_datetime_tag.find('span', class_='article-meta-value')
+        assert isinstance(article_meta_datetime_value, Tag), "Article meta datetime value not found"
+        article_meta_datetime = datetime.strptime(article_meta_datetime_value.get_text(strip=True), "%a %b %d %H:%M:%S %Y")
 
         # Remove metadata and pushes from content
         assert isinstance(main_content, Tag)
@@ -79,11 +81,11 @@ async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) 
             tag.decompose()
 
         content_text = main_content.text.strip()
-        return content_text, pushes
+        return content_text, article_meta_datetime, pushes
     
     except Exception as e:
         logger.error(f"Error fetching article content: {e}")
-        return '', []
+        return '', None, []
 
 
 async def search_articles(client: httpx.AsyncClient, board: str, keyword: str) -> List[Dict[str, Any]]:
@@ -232,9 +234,12 @@ async def process_article(
     
     try:
         # Get article content and comments
-        content, comments = await get_article_content_and_comments(client, article['url'])
+        content, time, comments = await get_article_content_and_comments(client, article['url'])
         article['content'] = content
         
+        if time is not None:
+            article['created_at'] = time
+
         # Post article to API
         posted = await post_article(client, platform, article)
         if posted:
