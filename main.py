@@ -116,7 +116,7 @@ async def search_articles(client: httpx.AsyncClient, board: str, keyword: str) -
 
                 assert isinstance(href, str)
                 href = BASE_URL + href
-                article_id = href.split('/')[-1].strip()
+                article_id = href.split('/')[-1].strip().replace('.html', '')
                 
                 logger.info(f"📄 {full_date.strftime('%m/%d')} {title} -> {href}")
 
