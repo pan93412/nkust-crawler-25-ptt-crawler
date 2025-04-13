@@ -30,7 +30,7 @@ API_BASE_URL = os.getenv("STORAGE_API_BASE_URL", "http://localhost:8080")  # Cha
 async def get_month_first_day() -> datetime:
     """Get the first day of the current month."""
     today = datetime.today()
-    return today.replace(day=1)
+    return today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
 async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) -> Tuple[str, datetime | None, List[Dict[str, str]]]:
