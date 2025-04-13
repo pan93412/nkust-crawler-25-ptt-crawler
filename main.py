@@ -262,7 +262,7 @@ async def process_article(
 
             # Create comment object
             comment = {
-                "id": f"article-{article['id']}-comment-{id}",
+                "id": f"c{id}",
                 "content": comment_data['content'],
                 "created_at": comment_time,
                 "author": comment_data['user'],
