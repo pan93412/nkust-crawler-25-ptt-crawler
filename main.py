@@ -207,7 +207,7 @@ async def post_comment(
             "content": comment["content"],
             "created_at": comment["created_at"].isoformat(),
             "author": comment["author"],
-            "likes": comment["likes"]
+            "reaction_type": comment["reaction_type"]
         }
         
         response = await client.post(url, json=payload)
@@ -266,7 +266,7 @@ async def process_article(
                 "content": comment_data['content'],
                 "created_at": comment_time,
                 "author": comment_data['user'],
-                "likes": 0  # Default value, PTT doesn't have likes
+                "reaction_type": tag_to_reaction_type(comment_data['tag'])
             }
             
             # Add post comment task
@@ -284,6 +284,14 @@ async def process_article(
 
     except Exception as e:
         logger.error(f"⚠️ Error processing article: {e}")
+
+
+def tag_to_reaction_type(tag: str) -> str:
+    if tag == '推':
+        return '+1'
+    elif tag == '噓':
+        return '-1'
+    return '0'
 
 
 async def main():
