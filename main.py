@@ -1,11 +1,11 @@
 import asyncio
 import os
+import re
 import httpx
 from bs4 import BeautifulSoup, Tag
 from datetime import datetime
-import uuid
 import logging
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, cast
 
 # Configure logging
 logging.basicConfig(
@@ -26,11 +26,14 @@ COOKIES = {
 # API configuration
 API_BASE_URL = os.getenv("STORAGE_API_BASE_URL", "http://localhost:8080")  # Change this to your actual API base URL
 
+# 111.240.96.24 03/29 22:49
+IP_DATETIME_EXTRACTOR = re.compile(r"([\d.]+) (\d{2}/\d{2} \d{2}:\d{2})")
+
 
 async def get_month_first_day() -> datetime:
     """Get the first day of the current month."""
     today = datetime.today()
-    return today.replace(day=1)
+    return today.replace(day=today.day - 1)
 
 
 async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) -> Tuple[str, List[Dict[str, str]]]:
@@ -51,13 +54,23 @@ async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) 
             tag = push.select_one('span.push-tag')
             user = push.select_one('span.push-userid')
             content = push.select_one('span.push-content')
-            time = push.select_one('span.push-ipdatetime')
-            
+            ipdatetime = push.select_one('span.push-ipdatetime')
+
+            ip = ''
+            datetime = ''
+
+            if ipdatetime:
+                ipdatetime_match = IP_DATETIME_EXTRACTOR.match(ipdatetime.text.strip())
+                if ipdatetime_match:
+                    ip = cast(str, ipdatetime_match.group(1))
+                    datetime = cast(str, ipdatetime_match.group(2))
+
             pushes.append({
                 'tag': tag.text.strip() if tag else '',
                 'user': user.text.strip() if user else '',
                 'content': content.text.strip(': ').strip() if content else '',
-                'time': time.text.strip() if time else ''
+                'ip': ip,
+                'datetime': datetime
             })
 
         # Remove metadata and pushes from content
@@ -159,6 +172,8 @@ async def post_article(client: httpx.AsyncClient, platform: str, article: Dict[s
             "content": article["content"],
             "url": article["url"]
         }
+
+        print("Payload-Created-At: ", article["created_at"])
         
         response = await client.post(url, json=payload)
         
@@ -230,17 +245,18 @@ async def process_article(
         
         # Process and post comments concurrently
         comment_tasks = []
-        for comment_data in comments:
+        for id, comment_data in enumerate(comments):
             # Parse comment time if available
             try:
                 comment_time = datetime.strptime(comment_data['time'].strip(), "%m/%d %H:%M")
                 comment_time = comment_time.replace(year=datetime.now().year)
             except ValueError:
+                print("Bad time format: ", comment_data['time'])
                 comment_time = datetime.now()
-            
+
             # Create comment object
             comment = {
-                "id": str(uuid.uuid4()),  # Generate unique ID
+                "id": f"article-{article['id']}-comment-{id}",
                 "content": comment_data['content'],
                 "created_at": comment_time,
                 "author": comment_data['user'],
