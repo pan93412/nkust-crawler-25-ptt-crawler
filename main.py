@@ -1,4 +1,5 @@
 import asyncio
+import os
 import httpx
 from bs4 import BeautifulSoup, Tag
 from datetime import datetime
@@ -23,7 +24,7 @@ COOKIES = {
 }
 
 # API configuration
-API_BASE_URL = "http://localhost:8080"  # Change this to your actual API base URL
+API_BASE_URL = os.getenv("STORAGE_API_BASE_URL", "http://localhost:8080")  # Change this to your actual API base URL
 
 
 async def get_month_first_day() -> datetime:
