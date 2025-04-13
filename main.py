@@ -62,7 +62,7 @@ async def get_article_content_and_comments(client: httpx.AsyncClient, url: str) 
 
         # Remove metadata and pushes from content
         assert isinstance(main_content, Tag)
-        for tag in main_content.select('div.article-metaline') + main_content.select('div.push'):
+        for tag in main_content.select('div.article-metaline') + main_content.select('div.article-metaline-right') + main_content.select('div.push'):
             tag.decompose()
 
         content_text = main_content.text.strip()
