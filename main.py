@@ -181,6 +181,11 @@ async def post_article(client: httpx.AsyncClient, platform: str, article: Dict[s
         
         if response.status_code == 201:
             result = response.json()
+
+            # if this article has been always posted, return False (do nothing)
+            if result.get("existed", False):
+                return False
+
             return result.get("success", False)
         else:
             logger.error(f"API error posting article: {response.status_code} - {response.text}")
@@ -247,7 +252,7 @@ async def process_article(
         else:
             logger.warning(f"⚠️ Failed to post article: {article['title']}")
             return
-        
+
         # Process and post comments concurrently
         comment_tasks = []
         for id, comment_data in enumerate(comments):
