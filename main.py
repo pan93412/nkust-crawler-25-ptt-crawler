@@ -227,7 +227,8 @@ async def process_article(
             logger.warning(f"⚠️ Failed to post article: {article['title']}")
             return
         
-        # Process and post comments
+        # Process and post comments concurrently
+        comment_tasks = []
         for comment_data in comments:
             # Parse comment time if available
             try:
@@ -245,11 +246,19 @@ async def process_article(
                 "likes": 0  # Default value, PTT doesn't have likes
             }
             
-            # Post comment to API
-            posted = await post_comment(client, platform, article['id'], comment)
-            if not posted:
-                logger.warning(f"⚠️ Failed to post comment by {comment['author']}")
-    
+            # Add post comment task
+            comment_tasks.append(post_comment(client, platform, article['id'], comment))
+        
+        # Execute all comment posting tasks concurrently
+        results = await asyncio.gather(*comment_tasks, return_exceptions=True)
+        
+        # Check results
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.warning(f"⚠️ Failed to post comment: {result}")
+            elif not result:
+                logger.warning(f"⚠️ Failed to post comment by {comments[i]['user']}")
+
     except Exception as e:
         logger.error(f"⚠️ Error processing article: {e}")
 
@@ -257,14 +266,20 @@ async def process_article(
 async def main():
     board = input("Enter the board name: ")
     keyword = input("Enter the keyword: ")
-    platform = input("Enter the platform (for API endpoint): ")
     
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Search for articles
         articles = await search_articles(client, board, keyword)
         
         # Process each article and its comments
-        tasks = [process_article(client, platform, article) for article in articles]
+        # Create a semaphore to limit concurrent tasks to 4
+        semaphore = asyncio.Semaphore(4)
+        
+        async def process_with_semaphore(article):
+            async with semaphore:
+                return await process_article(client, "ptt", article)
+        
+        tasks = (process_with_semaphore(article) for article in articles)
         await asyncio.gather(*tasks)
     
     logger.info("✅ Crawling completed")
