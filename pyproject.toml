@@ -1,10 +1,23 @@
 [project]
 name = "ptt-scraper"
 version = "0.1.0"
-description = "Add your description here"
+description = "PTT (Taiwan bulletin board system) scraper with OOP structure"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.13.3",
     "httpx>=0.28.1",
+    "pydantic>=2.11.5",
+    "sqlalchemy>=2.0.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-describe>=2.2.0",
+    "ruff>=0.11.13",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
