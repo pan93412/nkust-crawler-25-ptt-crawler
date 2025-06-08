@@ -8,7 +8,7 @@ from ptt_scraper.models import Article, Comment, SearchResult, PaginationInfo
 
 # Test data
 SAMPLE_COMMENT = Comment(
-    id="c1",
+    floor=2,
     content="測試留言內容",
     author="testuser",
     created_at=datetime(2025, 1, 15, 12, 0, tzinfo=ZoneInfo("Asia/Taipei")),
@@ -43,7 +43,7 @@ def describe_comment_model():
     
     def test_comment_creation(sample_comment: Comment):
         """測試留言建立"""
-        assert sample_comment.id == "c1"
+        assert sample_comment.floor == 2
         assert sample_comment.content == "測試留言內容"
         assert sample_comment.author == "testuser"
         assert sample_comment.reaction_type == "+1"
@@ -52,7 +52,7 @@ def describe_comment_model():
     def test_comment_json_serialization(sample_comment: Comment):
         """測試留言 JSON 序列化"""
         json_data = sample_comment.model_dump()
-        assert json_data["id"] == "c1"
+        assert json_data["floor"] == 2
         assert json_data["content"] == "測試留言內容"
         assert json_data["author"] == "testuser"
         assert json_data["reaction_type"] == "+1"
@@ -61,7 +61,7 @@ def describe_comment_model():
         """測試留言驗證"""
         # 測試有效的反應類型
         valid_comment = Comment(
-            id="c2",
+            floor=3,
             content="測試",
             author="user",
             created_at=datetime.now(ZoneInfo("Asia/Taipei")),
@@ -71,7 +71,7 @@ def describe_comment_model():
         
         # 測試中性反應類型
         neutral_comment = Comment(
-            id="c3",
+            floor=4,
             content="測試",
             author="user",
             created_at=datetime.now(ZoneInfo("Asia/Taipei")),
@@ -184,7 +184,7 @@ def describe_pagination_info_model():
 def test_comment_reaction_types(reaction_type: str, expected: str):
     """測試留言反應類型參數化"""
     comment = Comment(
-        id="test",
+        floor=1,
         content="test content",
         author="test_user",
         created_at=datetime.now(ZoneInfo("Asia/Taipei")),
@@ -200,7 +200,7 @@ def test_article_has_required_fields(sample_article: Article, field_name: str):
     assert getattr(sample_article, field_name) is not None
 
 
-@pytest.mark.parametrize("field_name", ["id", "content", "author", "created_at", "reaction_type"])
+@pytest.mark.parametrize("field_name", ["floor", "content", "author", "created_at", "reaction_type"])
 def test_comment_has_required_fields(sample_comment: Comment, field_name: str):
     """測試留言必要欄位參數化"""
     assert hasattr(sample_comment, field_name)

@@ -5,7 +5,7 @@ from datetime import datetime
 class Comment(BaseModel):
     """PTT 文章的留言模型"""
 
-    id: str = Field(description="留言ID")
+    floor: int = Field(description="留言樓層")
     content: str = Field(description="留言內容")
     author: str = Field(description="留言作者")
     created_at: datetime = Field(description="留言時間")
@@ -66,7 +66,7 @@ class ArticleOutput(BaseModel):
 
 class CommentOutput(BaseModel):
     """輸出 JSON 的留言模型"""
-    id: str = Field(description="留言ID")
+    floor: int = Field(description="留言樓層")
     content: str = Field(description="留言內容")
     author: str = Field(description="留言作者")
     created_at: datetime = Field(description="留言時間")

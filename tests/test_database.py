@@ -36,21 +36,21 @@ def sample_article():
         author="testauthor",
         content="測試文章內容",
         created_at=datetime(2025, 1, 15, 10, 0, tzinfo=ZoneInfo("Asia/Taipei")),
-        comments=[
-            Comment(
-                id="c1",
-                content="測試留言1",
-                author="user1",
-                created_at=datetime(2025, 1, 15, 11, 0, tzinfo=ZoneInfo("Asia/Taipei")),
-                reaction_type="+1"
-            ),
-            Comment(
-                id="c2",
-                content="測試留言2",
-                author="user2",
-                created_at=datetime(2025, 1, 15, 12, 0, tzinfo=ZoneInfo("Asia/Taipei")),
-                reaction_type="-1"
-            )
+                    comments=[
+                Comment(
+                    floor=2,
+                    content="測試留言1",
+                    author="user1",
+                    created_at=datetime(2025, 1, 15, 11, 0, tzinfo=ZoneInfo("Asia/Taipei")),
+                    reaction_type="+1"
+                ),
+                Comment(
+                    floor=3,
+                    content="測試留言2",
+                    author="user2",
+                    created_at=datetime(2025, 1, 15, 12, 0, tzinfo=ZoneInfo("Asia/Taipei")),
+                    reaction_type="-1"
+                )
         ]
     )
 

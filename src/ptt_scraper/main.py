@@ -10,7 +10,6 @@ Usage examples:
 import asyncio
 import argparse
 import sys
-from typing import Optional
 
 from .crawler import crawl_ptt
 from .database import DatabaseManager
@@ -70,10 +69,10 @@ def show_stats(db_path: str) -> None:
     try:
         stats = db_manager.get_database_stats()
         print("\n=== PTT Scraper 資料庫統計 ===")
-        print(f"總文章數: {stats['total_articles']}")
-        print(f"總留言數: {stats['total_comments']}")
-        print(f"資料庫檔案: {stats['database_path']}")
-        print(f"資料庫大小: {stats['database_size_mb']} MB")
+        print(f"總文章數: {stats.total_articles}")
+        print(f"總留言數: {stats.total_comments}")
+        print(f"資料庫檔案: {stats.database_path}")
+        print(f"資料庫大小: {stats.database_size_mb} MB")
         print("=" * 32)
     finally:
         db_manager.close()
@@ -137,7 +136,7 @@ def interactive_mode() -> None:
             return
         
         # 執行爬蟲
-        asyncio.run(crawl_ptt(board, keyword))
+        _ = asyncio.run(crawl_ptt(board, keyword))
         
     except KeyboardInterrupt:
         print("\n⚠️ 程式被使用者中斷")

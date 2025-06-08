@@ -262,7 +262,7 @@ class CommentScraper:
             reaction_type = tag_to_reaction_type(tag)
             
             return Comment(
-                id=f"c{index}",
+                floor=index + 2,  # PTT樓層從2樓開始（1樓是原文）
                 content=content,
                 author=author,
                 created_at=created_at,

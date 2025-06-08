@@ -49,7 +49,7 @@ class SqlComment(Base):
     __tablename__: str = 'comments'
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    ptt_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    floor: Mapped[int] = mapped_column(nullable=False, index=True)
     author: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     reaction_type: Mapped[str] = mapped_column(String(10), nullable=False)
@@ -62,15 +62,15 @@ class SqlComment(Base):
     # Relationship with article
     article: Mapped["SqlArticle"] = relationship("SqlArticle", back_populates="comments")
     
-    # Unique constraint on (article_id, ptt_id) to prevent duplicate comments
+    # Unique constraint on (article_id, floor) to prevent duplicate comments
     __table_args__: tuple[UniqueConstraint, ...] = (
-        UniqueConstraint('article_id', 'ptt_id', name='unique_article_comment'),
+        UniqueConstraint('article_id', 'floor', name='unique_article_floor'),
     )
     
     def to_pydantic(self) -> Comment:
         """Convert SQLAlchemy model to Pydantic model"""
         return Comment(
-            id=self.ptt_id,
+            floor=self.floor,
             author=self.author,
             content=self.content,
             reaction_type=self.reaction_type,
@@ -128,13 +128,13 @@ class DatabaseManager:
                 existing_article.created_at = article.created_at
                 existing_article.updated_at = datetime.now()
                 
-                # Get existing comment IDs for this article
-                existing_comment_ids = set(
-                    session.query(SqlComment.ptt_id)
+                # Get existing comment floors for this article
+                existing_comment_floors = set(
+                    session.query(SqlComment.floor)
                     .filter_by(article_id=existing_article.id)
                     .all()
                 )
-                existing_comment_ids = {comment_id[0] for comment_id in existing_comment_ids}
+                existing_comment_floors = {floor[0] for floor in existing_comment_floors}
                 
                 # Use SQLAlchemy SQLite INSERT ON CONFLICT DO NOTHING to handle duplicates gracefully
                 new_comments_count = 0
@@ -143,7 +143,7 @@ class DatabaseManager:
                     stmt = (
                         insert(SqlComment)
                         .values(
-                            ptt_id=comment.id,
+                            floor=comment.floor,
                             author=comment.author,
                             content=comment.content,
                             reaction_type=comment.reaction_type,
@@ -151,7 +151,7 @@ class DatabaseManager:
                             article_id=existing_article.id
                         )
                         .on_conflict_do_nothing(
-                            index_elements=['article_id', 'ptt_id']
+                            index_elements=['article_id', 'floor']
                         )
                     )
                     result = session.execute(stmt)
@@ -160,7 +160,7 @@ class DatabaseManager:
                         new_comments_count += 1
                 
                 session.commit()
-                print(f"\t[*] Added {new_comments_count} new comments (preserved {len(existing_comment_ids)} existing)")
+                print(f"\t[*] Added {new_comments_count} new comments (preserved {len(existing_comment_floors)} existing)")
                 
                 return existing_article.id
             else:
@@ -183,7 +183,7 @@ class DatabaseManager:
                     stmt = (
                         insert(SqlComment)
                         .values(
-                            ptt_id=comment.id,
+                            floor=comment.floor,
                             author=comment.author,
                             content=comment.content,
                             reaction_type=comment.reaction_type,
@@ -191,7 +191,7 @@ class DatabaseManager:
                             article_id=article_db.id
                         )
                         .on_conflict_do_nothing(
-                            index_elements=['article_id', 'ptt_id']
+                            index_elements=['article_id', 'floor']
                         )
                     )
                     result = session.execute(stmt)
