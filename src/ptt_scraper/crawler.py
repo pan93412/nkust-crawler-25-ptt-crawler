@@ -1,6 +1,6 @@
 import asyncio
 import httpx
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import final
 import logging
 
@@ -54,7 +54,8 @@ class PTTCrawler:
     def get_cutoff_date(self) -> datetime:
         """取得截止日期"""
         today = datetime.today()
-        return today.replace(day=today.day - self.cutoff_days, hour=0, minute=0, second=0, microsecond=0)
+        cutoff_date = today - timedelta(days=self.cutoff_days)
+        return cutoff_date.replace(hour=0, minute=0, second=0, microsecond=0)
     
     async def fetch_html(self, url: str) -> str:
         """
