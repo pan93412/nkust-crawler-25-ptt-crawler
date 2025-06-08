@@ -21,6 +21,7 @@ class Article(BaseModel):
     author: str | None = Field(default=None, description="文章作者")
     content: str = Field(description="文章內容")
     created_at: datetime = Field(description="文章時間")
+    board: str = Field(description="看板名稱")
     comments: list[Comment] = Field(default_factory=list, description="文章留言")
 
 
@@ -31,6 +32,7 @@ class SearchResult(BaseModel):
     title: str = Field(description="文章標題")
     url: str = Field(description="文章URL")
     created_at: datetime = Field(description="文章時間")
+    board: str = Field(description="看板名稱")
 
 
 class PaginationInfo(BaseModel):
@@ -62,6 +64,7 @@ class ArticleOutput(BaseModel):
     author: str | None = Field(default=None, description="文章作者")
     content: str = Field(description="文章內容")
     created_at: datetime = Field(description="文章時間")
+    board: str = Field(description="看板名稱")
 
 
 class CommentOutput(BaseModel):

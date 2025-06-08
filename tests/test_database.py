@@ -36,21 +36,22 @@ def sample_article():
         author="testauthor",
         content="測試文章內容",
         created_at=datetime(2025, 1, 15, 10, 0, tzinfo=ZoneInfo("Asia/Taipei")),
-                    comments=[
-                Comment(
-                    floor=2,
-                    content="測試留言1",
-                    author="user1",
-                    created_at=datetime(2025, 1, 15, 11, 0, tzinfo=ZoneInfo("Asia/Taipei")),
-                    reaction_type="+1"
-                ),
-                Comment(
-                    floor=3,
-                    content="測試留言2",
-                    author="user2",
-                    created_at=datetime(2025, 1, 15, 12, 0, tzinfo=ZoneInfo("Asia/Taipei")),
-                    reaction_type="-1"
-                )
+        board="Test",
+        comments=[
+            Comment(
+                floor=2,
+                content="測試留言1",
+                author="user1",
+                created_at=datetime(2025, 1, 15, 11, 0, tzinfo=ZoneInfo("Asia/Taipei")),
+                reaction_type="+1"
+            ),
+            Comment(
+                floor=3,
+                content="測試留言2",
+                author="user2",
+                created_at=datetime(2025, 1, 15, 12, 0, tzinfo=ZoneInfo("Asia/Taipei")),
+                reaction_type="-1"
+            )
         ]
     )
 
@@ -151,7 +152,8 @@ def describe_database_manager():
             url="https://www.ptt.cc/bbs/Test/M.1111111111.A.111.html",
             author="author1",
             content="作者1的內容",
-            created_at=datetime.now(ZoneInfo("Asia/Taipei"))
+            created_at=datetime.now(ZoneInfo("Asia/Taipei")),
+            board="Test"
         )
         
         article2 = Article(
@@ -160,7 +162,8 @@ def describe_database_manager():
             url="https://www.ptt.cc/bbs/Test/M.2222222222.A.222.html",
             author="author2",
             content="作者2的內容",
-            created_at=datetime.now(ZoneInfo("Asia/Taipei"))
+            created_at=datetime.now(ZoneInfo("Asia/Taipei")),
+            board="Test"
         )
         
         # 儲存文章
@@ -209,7 +212,8 @@ def describe_database_manager():
                 url=f"https://www.ptt.cc/bbs/Test/M.{i}{i}{i}{i}{i}{i}{i}{i}{i}{i}.A.{i}{i}{i}.html",
                 author=f"author{i}",
                 content=f"測試內容{i}",
-                created_at=datetime.now(ZoneInfo("Asia/Taipei"))
+                created_at=datetime.now(ZoneInfo("Asia/Taipei")),
+                board="Test"
             )
             _ = temp_db.save_article(article)
         
@@ -257,7 +261,8 @@ def test_multiple_articles_storage(temp_db: DatabaseManager, article_count: int)
             url=f"https://www.ptt.cc/bbs/Test/M.{i:10d}.A.{i:03d}.html",
             author=f"author{i}",
             content=f"測試內容{i}",
-            created_at=datetime.now(ZoneInfo("Asia/Taipei"))
+            created_at=datetime.now(ZoneInfo("Asia/Taipei")),
+            board="Test"
         )
         _ = temp_db.save_article(article)
     

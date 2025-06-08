@@ -22,6 +22,7 @@ SAMPLE_ARTICLE = Article(
     author="testauthor",
     content="測試文章內容",
     created_at=datetime(2025, 1, 15, 10, 0, tzinfo=ZoneInfo("Asia/Taipei")),
+    board="Test",
     comments=[SAMPLE_COMMENT]
 )
 
@@ -101,7 +102,8 @@ def describe_article_model():
             url="https://www.ptt.cc/bbs/Test/M.1234567890.A.124.html",
             author=None,
             content="匿名文章內容",
-            created_at=datetime.now(ZoneInfo("Asia/Taipei"))
+            created_at=datetime.now(ZoneInfo("Asia/Taipei")),
+            board="Test"
         )
         assert article.author is None
         assert len(article.comments) == 0
@@ -131,7 +133,8 @@ def describe_search_result_model():
             id="M.1234567890.A.125",
             title="搜尋結果標題",
             url="https://www.ptt.cc/bbs/Test/M.1234567890.A.125.html",
-            created_at=datetime(2025, 1, 15, 14, 0, tzinfo=ZoneInfo("Asia/Taipei"))
+            created_at=datetime(2025, 1, 15, 14, 0, tzinfo=ZoneInfo("Asia/Taipei")),
+            board="Test"
         )
         assert result.id == "M.1234567890.A.125"
         assert result.title == "搜尋結果標題"
@@ -193,7 +196,7 @@ def test_comment_reaction_types(reaction_type: str, expected: str):
     assert comment.reaction_type == expected
 
 
-@pytest.mark.parametrize("field_name", ["id", "title", "url", "content", "created_at", "comments"])
+@pytest.mark.parametrize("field_name", ["id", "title", "url", "content", "created_at", "board", "comments"])
 def test_article_has_required_fields(sample_article: Article, field_name: str):
     """測試文章必要欄位參數化"""
     assert hasattr(sample_article, field_name)

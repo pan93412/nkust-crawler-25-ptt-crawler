@@ -103,7 +103,7 @@ class PTTCrawler:
                     
                 pagination_scraper = PaginationScraper(html_content)
                 results, stop_flag = self._extract_search_results_from_page(
-                    html_content, cutoff_date
+                    html_content, cutoff_date, board
                 )
                 
                 all_results.extend(results)
@@ -125,7 +125,7 @@ class PTTCrawler:
         logger.info(f"✅ Found {len(all_results)} articles")
         return all_results
     
-    def _extract_search_results_from_page(self, html_content: str, cutoff_date: datetime) -> tuple[list[SearchResult], bool]:
+    def _extract_search_results_from_page(self, html_content: str, cutoff_date: datetime, board: str) -> tuple[list[SearchResult], bool]:
         """
         從搜尋結果頁面提取文章列表
         
@@ -180,12 +180,13 @@ class PTTCrawler:
                 id=article_id,
                 title=title,
                 url=full_url,
-                created_at=full_date
+                created_at=full_date,
+                board=board
             ))
         
         return results, stop_flag
     
-    async def scrape_article(self, url: str) -> Article | None:
+    async def scrape_article(self, url: str, board: str) -> Article | None:
         """
         抓取單一文章及其留言
         
@@ -221,6 +222,7 @@ class PTTCrawler:
                 author=author,
                 content=content,
                 created_at=created_at,
+                board=board,
                 comments=comments
             )
             
@@ -255,7 +257,7 @@ class PTTCrawler:
             async with semaphore:
                 logger.info(f"🔎 Processing: {search_result.title}")
                 
-                article = await self.scrape_article(search_result.url)
+                article = await self.scrape_article(search_result.url, search_result.board)
                 if article:
                     try:
                         _ = self.db_manager.save_article(article)

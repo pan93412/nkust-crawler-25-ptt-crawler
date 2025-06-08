@@ -24,6 +24,7 @@ class SqlArticle(Base):
     author: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    board: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     scraped_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
     
@@ -39,6 +40,7 @@ class SqlArticle(Base):
             author=self.author,
             content=self.content,
             created_at=self.created_at,
+            board=self.board,
             comments=[comment.to_pydantic() for comment in self.comments]
         )
 
@@ -126,6 +128,7 @@ class DatabaseManager:
                 existing_article.author = article.author
                 existing_article.content = article.content
                 existing_article.created_at = article.created_at
+                existing_article.board = article.board
                 existing_article.updated_at = datetime.now()
                 
                 # Get existing comment floors for this article
@@ -171,7 +174,8 @@ class DatabaseManager:
                     url=article.url,
                     author=article.author,
                     content=article.content,
-                    created_at=article.created_at
+                    created_at=article.created_at,
+                    board=article.board
                 )
                 session.add(article_db)
                 session.flush()  # Get the ID
@@ -279,6 +283,23 @@ class DatabaseManager:
         session = self.get_session()
         try:
             articles_db = session.query(SqlArticle).filter_by(author=author).all()
+            return [article.to_pydantic() for article in articles_db]
+        finally:
+            session.close()
+    
+    def get_articles_by_board(self, board: str) -> list[Article]:
+        """
+        Get all articles by a specific board
+        
+        Args:
+            board: Board name
+            
+        Returns:
+            List of articles
+        """
+        session = self.get_session()
+        try:
+            articles_db = session.query(SqlArticle).filter_by(board=board).all()
             return [article.to_pydantic() for article in articles_db]
         finally:
             session.close()
