@@ -103,7 +103,7 @@ class PTTCrawler:
                     
                 pagination_scraper = PaginationScraper(html_content)
                 results, stop_flag = self._extract_search_results_from_page(
-                    html_content, cutoff_date, board
+                    html_content, cutoff_date
                 )
                 
                 all_results.extend(results)
@@ -125,7 +125,7 @@ class PTTCrawler:
         logger.info(f"✅ Found {len(all_results)} articles")
         return all_results
     
-    def _extract_search_results_from_page(self, html_content: str, cutoff_date: datetime, board: str) -> tuple[list[SearchResult], bool]:
+    def _extract_search_results_from_page(self, html_content: str, cutoff_date: datetime) -> tuple[list[SearchResult], bool]:
         """
         從搜尋結果頁面提取文章列表
         
@@ -176,17 +176,21 @@ class PTTCrawler:
             
             logger.info(f"📄 {full_date.strftime('%m/%d')} {title} -> {full_url}")
             
+            # Extract board name from URL
+            # URL format: https://www.ptt.cc/bbs/BoardName/search?q=keyword
+            board_name = full_url.split('/bbs/')[1].split('/')[0] if '/bbs/' in full_url else "Unknown"
+            
             results.append(SearchResult(
                 id=article_id,
                 title=title,
                 url=full_url,
                 created_at=full_date,
-                board=board
+                board=board_name
             ))
         
         return results, stop_flag
     
-    async def scrape_article(self, url: str, board: str) -> Article | None:
+    async def scrape_article(self, url: str) -> Article | None:
         """
         抓取單一文章及其留言
         
@@ -215,6 +219,10 @@ class PTTCrawler:
             soup = article_scraper.get_soup()
             comments = comment_scraper.extract_comments(soup, created_at.year)
             
+            # Extract board name from URL
+            # URL format: https://www.ptt.cc/bbs/BoardName/M.xxxxx.A.xxx.html
+            board_name = url.split('/bbs/')[1].split('/')[0] if '/bbs/' in url else "Unknown"
+            
             return Article(
                 id=article_id,
                 title=title,
@@ -222,7 +230,7 @@ class PTTCrawler:
                 author=author,
                 content=content,
                 created_at=created_at,
-                board=board,
+                board=board_name,
                 comments=comments
             )
             
@@ -257,7 +265,7 @@ class PTTCrawler:
             async with semaphore:
                 logger.info(f"🔎 Processing: {search_result.title}")
                 
-                article = await self.scrape_article(search_result.url, search_result.board)
+                article = await self.scrape_article(search_result.url)
                 if article:
                     try:
                         _ = self.db_manager.save_article(article)

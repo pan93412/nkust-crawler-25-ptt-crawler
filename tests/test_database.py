@@ -179,6 +179,48 @@ def describe_database_manager():
         assert len(author2_articles) == 1
         assert author2_articles[0].author == "author2"
     
+    def test_get_articles_by_board(temp_db: DatabaseManager):
+        """測試根據看板取得文章"""
+        # 創建多篇不同看板的文章
+        article1 = Article(
+            id="M.1111111111.A.111",
+            title="Gossiping看板的文章",
+            url="https://www.ptt.cc/bbs/Gossiping/M.1111111111.A.111.html",
+            author="author1",
+            content="Gossiping內容",
+            created_at=datetime.now(ZoneInfo("Asia/Taipei")),
+            board="Gossiping"
+        )
+        
+        article2 = Article(
+            id="M.2222222222.A.222",
+            title="TechJob看板的文章",
+            url="https://www.ptt.cc/bbs/TechJob/M.2222222222.A.222.html",
+            author="author2",
+            content="TechJob內容",
+            created_at=datetime.now(ZoneInfo("Asia/Taipei")),
+            board="TechJob"
+        )
+        
+        # 儲存文章
+        _ = temp_db.save_article(article1)
+        _ = temp_db.save_article(article2)
+        
+        # 搜尋特定看板的文章
+        gossiping_articles = temp_db.get_articles_by_board("Gossiping")
+        assert len(gossiping_articles) == 1
+        assert gossiping_articles[0].board == "Gossiping"
+        assert gossiping_articles[0].title == "Gossiping看板的文章"
+        
+        techjob_articles = temp_db.get_articles_by_board("TechJob")
+        assert len(techjob_articles) == 1
+        assert techjob_articles[0].board == "TechJob"
+        assert techjob_articles[0].title == "TechJob看板的文章"
+        
+        # 搜尋不存在的看板
+        empty_articles = temp_db.get_articles_by_board("NonExistentBoard")
+        assert len(empty_articles) == 0
+    
     def test_delete_article(temp_db: DatabaseManager, sample_article: Article):
         """測試刪除文章"""
         # 先儲存文章
